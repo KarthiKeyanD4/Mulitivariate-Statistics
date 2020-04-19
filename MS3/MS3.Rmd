@@ -1,0 +1,72 @@
+---
+title: "Assignment 3"
+author: "Karthikeyan Devarajan"
+date: "02/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(FactoMineR)
+library(psych)
+sf <- read.csv(file.choose(),header = F)
+colnames(sf) <- c("Countries","X100M","X200M","X400M",
+                    "X800M","X1500M","X3000M","Marathon")
+sf1 <- sf[,-1]
+```
+  
+# Question 1: Principal components, including interpretation of them.  
+
+*The data on national track records for women are listed in Table 1.9.*  
+*(a) Obtain the sample correlation matrix R for these data, and determine its eigenvalues and eigenvectors*  
+
+```{r,echo=FALSE}
+c_names <- sf$Countries
+Column_means <- colMeans(sf1)
+vari <- var(sf1)
+corr_matrix <- cor(sf1)
+eigen_variable <-eigen(corr_matrix)
+cat("The correlation Matrix of the data is \n")
+corr_matrix
+cat("The eigen values of the data is \n",eigen_variable$values,"\n")
+#eigen_variable$values
+cat("The eigen vector of the data is \n")
+eigen_variable$vectors
+
+```
+  
+  *(b) Determine the first two principal components for the standardized variables. Prepare a table showing the correlations of the standardized variables with the components, and the cumulative percentage of the total (standardized) sample variance explained by the two components.*  
+
+```{r, echo=FALSE}
+pca_model <- PCA(sf1,scale.unit = T,ncp = 7,graph = F)
+cat("The Percentage of sample variance of PC 1:",pca_model$eig[1,2],"\n")
+cat("The Percentage of sample variance of PC 2:",pca_model$eig[2,2],"\n")
+cat("The Cumulative Percentage of sample variance of 2 PCA:",pca_model$eig[2,3],"\n")
+sf$pcscore1 <- pca_model$ind$coord[,1]
+sf$pcscore12 <- pca_model$ind$coord[,2]
+sf <- sf[order(sf$pcscore1,decreasing = T),]
+cat("The Rank of nation based on PC1:\n")
+RA <- sf[,c("Countries","pcscore1")]
+
+```
+
+```{r}
+MLfactanal <- factanal(sf1,factors = 2,scores = "regression",control = "lower")
+plot(MLfactanal$scores, pch="",main="Factor scores for ML factor analysis")
+text(MLfactanal$scores, labels = as.character(sf[,1]),cex=0.7)
+
+```
+
+```{r}
+MLfact2 <- factanal(sf1,covmat = NULL,factors  = 3)
+load <- MLfact2$loadings[,1:2]
+plot(load,type="n") 
+text(load,labels=as.character(sf[,1]),cex=.7)
+
+MLfact3 <- factanal(cor(sf1),covmat = var(sf1),n.obs=54,factors  = 3)
+MLfact3
+root_covar1 <- principal(var(sf[,2:8]), nfactors = 3, rotate = 'varimax', covar = FALSE)
+root_covar1
+root_covar2 <- principal(cor(sf[,2:8]), nfactors = 3, rotate = 'varimax', covar = FALSE)
+root_covar2
+```
